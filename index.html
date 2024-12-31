@@ -1,0 +1,81 @@
+<!doctype html>
+<html>
+    <meta charset="utf-8" />
+    <head>
+        <title>webproc: {{.cmd_name}}</title>
+        <style>
+            body {
+                padding: 0;
+                margin: 0;
+            }
+            div.streams > * {
+                display: inline-block;
+                width: 49%;
+                padding: 0;
+                margin: 0;
+            }
+
+            .linespan {
+                display: block;
+                font-family: "Berkeley Mono", "monospace";
+            }
+        </style>
+    </head>
+    <body>
+        <form action="#" id="stdinform">
+            <span>send to stdin: </span>
+            <input type="text" id="stdinline" />
+            <input type="submit" />
+        </form>
+
+        <div class="streams">
+            <div id="stdout">stdout</div>
+            <div id="stderr">stderr</div>
+        </div>
+
+        <script type="text/javascript">
+            async function by_line(url, callback) {
+                const response = await fetch(url);
+                let buf = "";
+                for await (const chunk of response.body) {
+                    const text = new TextDecoder().decode(chunk); // lol
+                    console.log(text);
+                    let list = text.split("\n");
+                    list[0] = buf + list[0]; // sickos HAHAHAH YES
+
+                    for (const line of list.slice(0, -1)) {
+                        callback(line);
+                    }
+
+                    if (text[-1] === "\n") {
+                        callback(list[-1]);
+                    } else {
+                        buf = list[-1];
+                    }
+                }
+            }
+
+            document
+                .getElementById("stdinform")
+                .addEventListener("submit", async (event) => {
+                    event.preventDefault();
+
+                    await fetch("/stdin", {
+                        method: "POST",
+                        body: `${document.getElementById("stdinline").value}\n`,
+                    });
+                });
+
+            const addlspan = (id) => (line) => {
+                let line_span = document.createElement("span");
+                line_span.innerText = line;
+                line_span.classList.add("linespan");
+
+                document.getElementById(id).appendChild(line_span);
+            };
+
+            by_line("/stdout", addlspan("stdout"));
+            by_line("/stderr", addlspan("stderr"));
+        </script>
+    </body>
+</html>

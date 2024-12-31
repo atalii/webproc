@@ -1,0 +1,10 @@
+webproc: wrap a process's stdin, stdout, and stderr in a web server for remote
+monitoring/management/debugging.
+
+────────┐
+WARNING │
+────────┐
+
+   this code is *terrible.* do not use this :)
+
+   it's just on github so that i can get it across my devices easily.
