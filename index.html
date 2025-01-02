@@ -34,7 +34,7 @@
         </div>
 
         <script type="text/javascript">
-            async function by_line(url, callback) {
+            function by_line(url, callback) {
                 const eventSource = new EventSource(url);
                 eventSource.onmessage = (event) => {
                     callback(event.data);

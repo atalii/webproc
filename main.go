@@ -38,13 +38,20 @@ func run(args []string) {
 
 func streamer(name string, stream chan string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Content-Type", "text/event-stream")
-		for line := range stream {
-			log.Printf("%s: %s\n", name, line)
-			event := fmt.Sprintf("data: %s\n\n", line)
+		flusher, ok := w.(http.Flusher)
+		if !ok {
+			http.Error(w, "can't convert to flusher", http.StatusInternalServerError)
+		}
 
-			w.Write([]byte(event))
-			w.(http.Flusher).Flush()
+		w.Header().Add("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
+
+		for line := range stream {
+			log.Printf("%s: %s", name, line)
+
+			fmt.Fprintf(w, "data: %s\n\n", line)
+			flusher.Flush()
 		}
 	}
 }
