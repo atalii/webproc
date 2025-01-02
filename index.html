@@ -35,24 +35,10 @@
 
         <script type="text/javascript">
             async function by_line(url, callback) {
-                const response = await fetch(url);
-                let buf = "";
-                for await (const chunk of response.body) {
-                    const text = new TextDecoder().decode(chunk); // lol
-                    console.log(text);
-                    let list = text.split("\n");
-                    list[0] = buf + list[0]; // sickos HAHAHAH YES
-
-                    for (const line of list.slice(0, -1)) {
-                        callback(line);
-                    }
-
-                    if (text[-1] === "\n") {
-                        callback(list[-1]);
-                    } else {
-                        buf = list[-1];
-                    }
-                }
+                const eventSource = new EventSource(url);
+                eventSource.onmessage = (event) => {
+                    callback(event.data);
+                };
             }
 
             document
@@ -74,8 +60,8 @@
                 document.getElementById(id).appendChild(line_span);
             };
 
-            by_line("/stdout", addlspan("stdout"));
-            by_line("/stderr", addlspan("stderr"));
+            by_line("stdout", addlspan("stdout"));
+            by_line("stderr", addlspan("stderr"));
         </script>
     </body>
 </html>

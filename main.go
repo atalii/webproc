@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	_ "embed"
+	"fmt"
 	"html/template"
 	"io"
 	"log"
@@ -37,12 +38,11 @@ func run(args []string) {
 
 func streamer(stream chan string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Content-Type", "text/plain")
-		w.Header().Add("Transfer-Encoding", "chunked")
+		w.Header().Add("Content-Type", "text/event-stream")
 		for line := range stream {
-			log.Println(line)
-			w.Write([]byte(line))
-			w.Write([]byte{'\n'})
+			event := fmt.Sprintf("data: %s\n\n", line)
+
+			w.Write([]byte(event))
 			w.(http.Flusher).Flush()
 		}
 	}
