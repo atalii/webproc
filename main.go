@@ -36,10 +36,11 @@ func run(args []string) {
 	serve(c, tx, args[0])
 }
 
-func streamer(stream chan string) http.HandlerFunc {
+func streamer(name string, stream chan string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/event-stream")
 		for line := range stream {
+			log.Printf("%s: %s\n", name, line)
 			event := fmt.Sprintf("data: %s\n\n", line)
 
 			w.Write([]byte(event))
@@ -61,8 +62,8 @@ func serve(cmd *cmd.Cmd, stdin io.Writer, cmd_name string) {
 		log.Fatal("couldn't build index template:", err)
 	}
 
-	http.Handle("/stdout", streamer(cmd.Stdout))
-	http.Handle("/stderr", streamer(cmd.Stderr))
+	http.Handle("/stdout", streamer("stdout", cmd.Stdout))
+	http.Handle("/stderr", streamer("stderr", cmd.Stderr))
 
 	http.HandleFunc("/stdin", func(w http.ResponseWriter, r *http.Request) {
 		if _, err := io.Copy(stdin, r.Body); err != nil {
